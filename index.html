@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>NOKTA WhatsApp Bağlantısı</title>
 
   <style>
@@ -11,26 +12,32 @@
       background: #090909;
       color: #f4f4f4;
       font-family: Arial, sans-serif;
+
       display: flex;
       justify-content: center;
       align-items: center;
+
       min-height: 100vh;
     }
 
     .card {
       width: 420px;
-      max-width: calc(100% - 40px);
       padding: 40px;
+
       border: 1px solid #b88a32;
       border-radius: 18px;
+
       background: #111;
       text-align: center;
-      box-sizing: border-box;
     }
 
     h1 {
       color: #d4af55;
       letter-spacing: 4px;
+    }
+
+    h2 {
+      color: #ffffff;
     }
 
     p {
@@ -42,19 +49,27 @@
       width: 100%;
       padding: 16px;
       margin-top: 20px;
+
       border: 0;
       border-radius: 10px;
+
       background: #d4af55;
       color: #080808;
+
       font-size: 17px;
       font-weight: bold;
+
       cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
     }
 
     #status {
       margin-top: 22px;
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -62,7 +77,9 @@
 <body>
 
 <div class="card">
+
   <h1>NOKTA</h1>
+
   <h2>WhatsApp Business</h2>
 
   <p>
@@ -70,38 +87,34 @@
     Nokta Cari sistemine bağla.
   </p>
 
-  <button id="connectButton" onclick="launchWhatsAppSignup()">
+  <button onclick="launchWhatsAppSignup()">
     WhatsApp Business'ı Bağla
   </button>
 
-  <div id="status">Bağlantı bekleniyor.</div>
+  <div id="status">
+    Bağlantı bekleniyor.
+  </div>
+
 </div>
 
+
 <script>
+
+  /* ==========================================
+     NOKTA META AYARLARI
+     ========================================== */
+
   const APP_ID = "1406505614384928";
+
   const CONFIG_ID = "1388583019481771";
 
-  let authorizationCode = null;
-  let wabaId = null;
-  let phoneNumberId = null;
 
-  function setStatus(message) {
-    document.getElementById("status").innerText = message;
-  }
-
-  function showResultIfReady() {
-    if (authorizationCode && wabaId && phoneNumberId) {
-      setStatus("✅ WhatsApp bağlantısı başarıyla tamamlandı.");
-
-      console.log("=== NOKTA WHATSAPP BAĞLANTI SONUCU ===");
-      console.log("Authorization Code:", authorizationCode);
-      console.log("WABA ID:", wabaId);
-      console.log("Phone Number ID:", phoneNumberId);
-      console.log("====================================");
-    }
-  }
+  /* ==========================================
+     FACEBOOK SDK BAŞLAT
+     ========================================== */
 
   window.fbAsyncInit = function() {
+
     FB.init({
       appId: APP_ID,
       cookie: true,
@@ -110,146 +123,271 @@
       status: false
     });
 
-    setStatus("Meta bağlantısı hazır.");
+    console.log("Facebook SDK hazır.");
+
+    document.getElementById("status").innerText =
+      "Meta bağlantısı hazır.";
   };
 
-  (function(d, s, id) {
-    let js;
-    const fjs = d.getElementsByTagName(s)[0];
 
-    if (d.getElementById(id)) return;
+  /* ==========================================
+     FACEBOOK SDK YÜKLE
+     ========================================== */
+
+  (function(d, s, id) {
+
+    var js;
+    var fjs = d.getElementsByTagName(s)[0];
+
+    if (d.getElementById(id)) {
+      return;
+    }
 
     js = d.createElement(s);
+
     js.id = id;
-    js.src = "https://connect.facebook.net/en_US/sdk.js";
+
+    js.src =
+      "https://connect.facebook.net/en_US/sdk.js";
 
     fjs.parentNode.insertBefore(js, fjs);
-  }(document, "script", "facebook-jssdk"));
+
+  }(
+    document,
+    "script",
+    "facebook-jssdk"
+  ));
 
 
-  // WhatsApp Embedded Signup eventlerini dinle
-  window.addEventListener("message", function(event) {
+  /* ==========================================
+     WHATSAPP SESSION INFO LISTENER
+     ========================================== */
 
-    if (
-      event.origin !== "https://www.facebook.com" &&
-      event.origin !== "https://web.facebook.com"
-    ) {
-      return;
-    }
+  window.addEventListener(
+    "message",
+    function(event) {
 
-    let data;
-
-    try {
-      data = typeof event.data === "string"
-        ? JSON.parse(event.data)
-        : event.data;
-    } catch (e) {
-      return;
-    }
-
-    if (!data || data.type !== "WA_EMBEDDED_SIGNUP") {
-      return;
-    }
-
-    console.log("WA_EMBEDDED_SIGNUP EVENT:", data);
-
-    if (data.event === "FINISH") {
-
-      wabaId =
-        data.data?.waba_id ||
-        data.data?.wabaId ||
-        null;
-
-      phoneNumberId =
-        data.data?.phone_number_id ||
-        data.data?.phoneNumberId ||
-        null;
-
-      console.log("WABA ID:", wabaId);
-      console.log("Phone Number ID:", phoneNumberId);
-
-      if (wabaId && phoneNumberId) {
-        setStatus("WhatsApp hesabı seçildi. Bağlantı tamamlanıyor...");
-      } else {
-        setStatus("Meta işlemi tamamlandı fakat hesap bilgileri eksik.");
+      if (
+        event.origin !== "https://www.facebook.com" &&
+        event.origin !== "https://web.facebook.com"
+      ) {
+        return;
       }
 
-      showResultIfReady();
+
+      let data = event.data;
+
+
+      /* Eğer veri JSON string olarak geldiyse */
+      if (typeof data === "string") {
+
+        try {
+
+          data = JSON.parse(data);
+
+        } catch (error) {
+
+          return;
+
+        }
+
+      }
+
+
+      /* Sadece WhatsApp Embedded Signup
+         mesajlarını işle */
+
+      if (
+        !data ||
+        data.type !== "WA_EMBEDDED_SIGNUP"
+      ) {
+        return;
+      }
+
+
+      console.log(
+        "WhatsApp Embedded Signup:",
+        data
+      );
+
+
+      /* ======================================
+         BAŞARILI
+         ====================================== */
+
+      if (data.event === "FINISH") {
+
+        const phoneNumberId =
+          data.data?.phone_number_id || null;
+
+        const wabaId =
+          data.data?.waba_id || null;
+
+
+        console.log(
+          "PHONE NUMBER ID:",
+          phoneNumberId
+        );
+
+        console.log(
+          "WABA ID:",
+          wabaId
+        );
+
+
+        document.getElementById("status").innerHTML =
+
+          "<strong>WhatsApp bağlantısı tamamlandı.</strong>" +
+
+          "<br><br>" +
+
+          "Phone Number ID: " +
+          (phoneNumberId || "-") +
+
+          "<br>" +
+
+          "WABA ID: " +
+          (wabaId || "-");
+
+      }
+
+
+      /* ======================================
+         İPTAL
+         ====================================== */
+
+      else if (data.event === "CANCEL") {
+
+        console.log(
+          "Embedded Signup iptal edildi:",
+          data
+        );
+
+        document.getElementById("status").innerText =
+          "WhatsApp bağlantısı iptal edildi.";
+
+      }
+
+
+      /* ======================================
+         HATA
+         ====================================== */
+
+      else if (data.event === "ERROR") {
+
+        console.error(
+          "Embedded Signup hatası:",
+          data
+        );
+
+        document.getElementById("status").innerText =
+          "WhatsApp bağlantısında hata oluştu.";
+
+      }
+
+    }
+  );
+
+
+  /* ==========================================
+     FACEBOOK LOGIN CALLBACK
+     ========================================== */
+
+  function fbLoginCallback(response) {
+
+    console.log(
+      "Login response:",
+      response
+    );
+
+
+    if (
+      response &&
+      response.authResponse
+    ) {
+
+      const code =
+        response.authResponse.code;
+
+
+      console.log(
+        "Authorization Code alındı:",
+        code
+      );
+
+
+      document.getElementById("status").innerText =
+        "Meta yetkilendirmesi alındı. " +
+        "WhatsApp hesap bilgileri bekleniyor...";
+
+
+      /*
+        SONRAKİ AŞAMA:
+
+        Bu authorization code
+        backend sunucumuza gönderilecek.
+
+        Backend tarafında Meta API ile
+        access token'a çevrilecek.
+
+        APP SECRET kesinlikle
+        bu HTML dosyasına yazılmayacak.
+      */
+
     }
 
-    else if (data.event === "CANCEL") {
-      console.log("Signup iptal edildi:", data);
-      setStatus("İşlem iptal edildi.");
+    else {
+
+      console.log(
+        "Yetkilendirme tamamlanmadı:",
+        response
+      );
+
+      document.getElementById("status").innerText =
+        "Yetkilendirme tamamlanmadı.";
+
     }
 
-    else if (data.event === "ERROR") {
-      console.error("Embedded Signup hatası:", data);
-      setStatus("WhatsApp bağlantısında Meta hatası oluştu.");
-    }
+  }
 
-  });
 
+  /* ==========================================
+     WHATSAPP EMBEDDED SIGNUP BAŞLAT
+     ========================================== */
 
   function launchWhatsAppSignup() {
 
-    if (typeof FB === "undefined") {
-      setStatus("Meta SDK henüz yüklenmedi. Birkaç saniye sonra tekrar deneyin.");
-      return;
-    }
+    document.getElementById("status").innerText =
+      "Meta açılıyor...";
 
-    authorizationCode = null;
-    wabaId = null;
-    phoneNumberId = null;
 
-    setStatus("Meta açılıyor...");
+    FB.login(
+      fbLoginCallback,
+      {
 
-    FB.login(function(response) {
+        config_id:
+          CONFIG_ID,
 
-      console.log("Login response:", response);
+        response_type:
+          "code",
 
-      if (
-        response &&
-        response.authResponse &&
-        response.authResponse.code
-      ) {
+        override_default_response_type:
+          true,
 
-        authorizationCode = response.authResponse.code;
+        /*
+          META'NIN SENİN CONFIG İÇİN
+          VERDİĞİ GÜNCEL AYAR
+        */
 
-        console.log(
-          "Authorization Code alındı:",
-          authorizationCode
-        );
+        extras: {
+          "version": "v4"
+        }
 
-        setStatus(
-          "Meta yetkilendirmesi alındı. WhatsApp hesap bilgileri bekleniyor..."
-        );
-
-        showResultIfReady();
-
-      } else {
-
-        console.error(
-          "Authorization code alınamadı:",
-          response
-        );
-
-        setStatus(
-          "Meta yetkilendirmesi tamamlanamadı."
-        );
       }
+    );
 
-    }, {
-      config_id: CONFIG_ID,
-      response_type: "code",
-      override_default_response_type: true,
-
-      extras: {
-        setup: {},
-        featureType: "whatsapp_business_app_onboarding",
-        sessionInfoVersion: "3"
-      }
-    });
   }
+
 </script>
 
 </body>
