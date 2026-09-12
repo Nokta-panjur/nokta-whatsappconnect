@@ -13,52 +13,64 @@
 
     body {
       margin: 0;
-      min-height: 100vh;
+      background: #090909;
+      color: #f4f4f4;
+      font-family: Arial, sans-serif;
+
       display: flex;
       justify-content: center;
       align-items: center;
-      background: #080808;
-      color: #ffffff;
-      font-family: Arial, Helvetica, sans-serif;
+
+      min-height: 100vh;
     }
 
     .card {
-      width: 480px;
+      width: 500px;
       max-width: calc(100% - 30px);
+
       padding: 45px;
+
+      border: 1px solid #b88a32;
+      border-radius: 18px;
+
+      background: #111;
+
       text-align: center;
-      background: #111111;
-      border: 1px solid #c69a3b;
-      border-radius: 20px;
     }
 
     h1 {
-      margin: 0 0 25px;
       color: #d4af55;
+      letter-spacing: 5px;
       font-size: 38px;
-      letter-spacing: 7px;
+      margin-top: 0;
     }
 
     h2 {
-      margin-bottom: 15px;
-      font-size: 25px;
+      font-size: 27px;
+      margin-top: 25px;
     }
 
     p {
-      color: #aaaaaa;
+      color: #aaa;
       line-height: 1.6;
+      font-size: 17px;
     }
 
     button {
       width: 100%;
-      margin-top: 20px;
+
       padding: 17px;
+      margin-top: 25px;
+
       border: 0;
       border-radius: 10px;
+
       background: #d4af55;
       color: #080808;
-      font-size: 17px;
+
+      font-size: 18px;
       font-weight: bold;
+
       cursor: pointer;
     }
 
@@ -68,292 +80,451 @@
 
     #status {
       margin-top: 25px;
-      font-size: 14px;
-      line-height: 1.7;
+      font-size: 15px;
+      line-height: 1.6;
     }
 
     .success {
-      color: #66d879;
+      color: #5cff85;
     }
 
     .error {
-      color: #ff6969;
+      color: #ff6b6b;
     }
   </style>
 </head>
 
+
 <body>
 
-  <div class="card">
+<div class="card">
 
-    <h1>NOKTA</h1>
+  <h1>NOKTA</h1>
 
-    <h2>WhatsApp Business</h2>
+  <h2>WhatsApp Business</h2>
 
-    <p>
-      Nokta WhatsApp Business hesabını
-      Nokta Cari sistemine bağla.
-    </p>
+  <p>
+    Nokta WhatsApp Business hesabını
+    Nokta Cari sistemine bağla.
+  </p>
 
-    <button onclick="launchWhatsAppSignup()">
-      WhatsApp Business'ı Bağla
-    </button>
+  <button onclick="launchWhatsAppSignup()">
+    WhatsApp Business'ı Bağla
+  </button>
 
-    <div id="status">
-      Meta SDK yükleniyor...
-    </div>
-
+  <div id="status">
+    Facebook SDK yükleniyor...
   </div>
 
-
-  <script>
-
-    /* ==========================================
-       META BİLGİLERİ
-       ========================================== */
-
-    const APP_ID = "1406505614384928";
-    const CONFIG_ID = "1388583019481771";
+</div>
 
 
-    /* ==========================================
-       META'NIN VERDİĞİ SDK v26.0
-       ========================================== */
+<!-- FACEBOOK SDK -->
 
-    window.fbAsyncInit = function() {
+<script>
 
-      FB.init({
-        appId: APP_ID,
-        autoLogAppEvents: true,
-        xfbml: true,
-        version: "v26.0"
-      });
+const APP_ID = "1406505614384928";
+const CONFIG_ID = "1388583019481771";
 
-      console.log("Facebook SDK v26.0 hazır.");
-
-      document.getElementById("status").innerText =
-        "Meta bağlantısı hazır.";
-    };
+let authorizationCode = null;
+let wabaId = null;
+let phoneNumberId = null;
 
 
-    /* ==========================================
-       SESSION INFO LISTENER
-       Meta Embedded Signup postMessage
-       ========================================== */
+/* =====================================================
+   FACEBOOK SDK
+===================================================== */
 
-    window.addEventListener("message", (event) => {
+window.fbAsyncInit = function() {
 
-      if (event.origin !== "https://www.facebook.com") {
-        return;
-      }
+  FB.init({
+    appId: APP_ID,
+    autoLogAppEvents: true,
+    xfbml: true,
+    version: "v26.0"
+  });
 
-      console.log("FACEBOOK RAW MESSAGE:", event.data);
+  console.log("Facebook SDK v26.0 hazır.");
 
-      try {
+  document.getElementById("status").innerText =
+    "Meta bağlantısı hazır.";
 
-        const data = JSON.parse(event.data);
-
-        console.log("FACEBOOK PARSED MESSAGE:", data);
-
-        if (data.type !== "WA_EMBEDDED_SIGNUP") {
-          return;
-        }
-
-        console.log("WA_EMBEDDED_SIGNUP:", data);
+};
 
 
-        /* ---------- BAŞARILI ---------- */
+/* =====================================================
+   EMBEDDED SIGNUP SESSION INFO
+===================================================== */
 
-        if (data.event === "FINISH") {
+window.addEventListener("message", function(event) {
 
-          const wabaId =
-            data.data && data.data.waba_id;
+  /*
+    Meta dokümanındaki WA Embedded Signup
+    mesajlarını dinliyoruz.
+  */
 
-          const phoneNumberId =
-            data.data && data.data.phone_number_id;
-
-
-          console.log(
-            "Embedded Signup FINISH alındı."
-          );
-
-          console.log(
-            "WABA ID:",
-            wabaId
-          );
-
-          console.log(
-            "PHONE NUMBER ID:",
-            phoneNumberId
-          );
+  if (event.origin !== "https://www.facebook.com") {
+    return;
+  }
 
 
-          document.getElementById("status").innerHTML =
-            '<span class="success">' +
-            '<strong>WHATSAPP BAĞLANTISI TAMAMLANDI ✅</strong>' +
-            '<br><br>' +
-            'WABA ID: ' + (wabaId || "-") +
-            '<br>' +
-            'Phone Number ID: ' + (phoneNumberId || "-") +
-            '</span>';
-        }
+  try {
+
+    const data =
+      typeof event.data === "string"
+        ? JSON.parse(event.data)
+        : event.data;
 
 
-        /* ---------- İPTAL ---------- */
-
-        else if (data.event === "CANCEL") {
-
-          console.log(
-            "Embedded Signup CANCEL:",
-            data
-          );
-
-          document.getElementById("status").innerHTML =
-            '<span class="error">' +
-            'WhatsApp bağlantısı iptal edildi.' +
-            '</span>';
-        }
+    if (!data || data.type !== "WA_EMBEDDED_SIGNUP") {
+      return;
+    }
 
 
-        /* ---------- HATA ---------- */
+    console.log("=================================");
+    console.log("WA_EMBEDDED_SIGNUP MESAJI GELDİ");
+    console.log("=================================");
 
-        else if (data.event === "ERROR") {
-
-          console.error(
-            "Embedded Signup ERROR:",
-            data
-          );
-
-          document.getElementById("status").innerHTML =
-            '<span class="error">' +
-            'WhatsApp Embedded Signup hatası oluştu.' +
-            '</span>';
-        }
-
-      }
-
-      catch (error) {
-
-        /*
-          OAuth popup mesajları JSON olmayabilir.
-          Bunları sadece debug için gösteriyoruz.
-        */
-
-        console.log(
-          "Facebook mesajı WA session JSON değildi."
-        );
-      }
-
-    });
+    console.log("Tüm veri:", data);
+    console.log("Event:", data.event);
+    console.log("Data:", data.data);
 
 
-    /* ==========================================
-       META LOGIN CALLBACK
-       ========================================== */
+    /* ===============================
+       FINISH
+    =============================== */
 
-    const fbLoginCallback = (response) => {
+    if (data.event === "FINISH") {
+
+      wabaId =
+        data.data &&
+        data.data.waba_id
+          ? data.data.waba_id
+          : null;
+
+
+      phoneNumberId =
+        data.data &&
+        data.data.phone_number_id
+          ? data.data.phone_number_id
+          : null;
+
+
+      console.log("FINISH geldi.");
 
       console.log(
-        "LOGIN CALLBACK:",
-        response
+        "WABA ID:",
+        wabaId
       );
-
-
-      if (
-        response &&
-        response.authResponse &&
-        response.authResponse.code
-      ) {
-
-        /*
-          Authorization Code'u bilerek
-          Console'a yazmıyoruz.
-        */
-
-        console.log(
-          "Authorization Code başarıyla alındı."
-        );
-
-
-        document.getElementById("status").innerText =
-          "Meta yetkilendirmesi tamamlandı. " +
-          "WhatsApp kurulum sonucu bekleniyor...";
-
-      }
-
-      else {
-
-        console.error(
-          "Meta yetkilendirmesi tamamlanamadı.",
-          response
-        );
-
-        document.getElementById("status").innerHTML =
-          '<span class="error">' +
-          'Meta yetkilendirmesi tamamlanamadı.' +
-          '</span>';
-      }
-
-    };
-
-
-    /* ==========================================
-       META'NIN VERDİĞİ EMBEDDED SIGNUP v4
-       ========================================== */
-
-    const launchWhatsAppSignup = () => {
-
-      if (typeof FB === "undefined") {
-
-        document.getElementById("status").innerHTML =
-          '<span class="error">' +
-          'Meta SDK henüz yüklenmedi. ' +
-          'Birkaç saniye sonra tekrar deneyin.' +
-          '</span>';
-
-        return;
-      }
-
 
       console.log(
-        "Embedded Signup v4 başlatılıyor..."
+        "PHONE NUMBER ID:",
+        phoneNumberId
       );
 
 
-      document.getElementById("status").innerText =
-        "Meta WhatsApp kurulumu açılıyor...";
+      document.getElementById("status").innerHTML =
+
+        '<span class="success">' +
+
+        "WhatsApp bağlantısı tamamlandı." +
+
+        "<br><br>" +
+
+        "WABA ID: " +
+        (wabaId || "bulunamadı") +
+
+        "<br>" +
+
+        "Phone Number ID: " +
+        (phoneNumberId || "bulunamadı") +
+
+        "</span>";
 
 
-      FB.login(
-        fbLoginCallback,
-        {
+      checkIntegrationData();
 
-          config_id: CONFIG_ID,
+    }
 
-          response_type: "code",
 
-          override_default_response_type: true,
+    /* ===============================
+       CANCEL
+    =============================== */
 
-          extras: {
-            "version": "v4"
-          }
+    else if (data.event === "CANCEL") {
 
-        }
+      console.warn(
+        "Embedded Signup iptal edildi:",
+        data
       );
 
-    };
 
-  </script>
+      document.getElementById("status").innerHTML =
+
+        '<span class="error">' +
+
+        "WhatsApp bağlantısı iptal edildi." +
+
+        "</span>";
+
+    }
 
 
-  <!-- META'NIN VERDİĞİ SDK YÜKLEME KODU -->
+    /* ===============================
+       ERROR
+    =============================== */
 
-  <script
-    async
-    defer
-    crossorigin="anonymous"
-    src="https://connect.facebook.net/en_US/sdk.js">
-  </script>
+    else if (data.event === "ERROR") {
+
+      console.error(
+        "Embedded Signup ERROR:",
+        data
+      );
+
+
+      document.getElementById("status").innerHTML =
+
+        '<span class="error">' +
+
+        "WhatsApp Embedded Signup hatası oluştu." +
+
+        "</span>";
+
+    }
+
+  }
+
+  catch (error) {
+
+    /*
+      Facebook SDK başka mesajlar da gönderiyor.
+
+      Örneğin:
+
+      cb=...
+      domain=...
+      code=...
+
+      Bunlar JSON olmadığı için buraya düşebilir.
+      Bu normal.
+    */
+
+    console.log(
+      "Facebook mesajı WA session JSON değildi."
+    );
+
+  }
+
+});
+
+
+/* =====================================================
+   FACEBOOK LOGIN CALLBACK
+===================================================== */
+
+function fbLoginCallback(response) {
+
+  console.log("LOGIN CALLBACK:", response);
+
+
+  if (
+    response &&
+    response.authResponse &&
+    response.authResponse.code
+  ) {
+
+    authorizationCode =
+      response.authResponse.code;
+
+
+    console.log(
+      "Authorization Code başarıyla alındı."
+    );
+
+    /*
+      CODE'U CONSOLE'A YAZDIRMIYORUZ.
+
+      Bu kod daha sonra backend'e gönderilecek
+      ve backend üzerinden Access Token'a
+      çevrilecek.
+
+      APP SECRET kesinlikle HTML'e
+      konulmayacak.
+    */
+
+
+    document.getElementById("status").innerText =
+
+      "Meta yetkilendirmesi alındı. " +
+      "WhatsApp hesap bilgileri bekleniyor...";
+
+
+    checkIntegrationData();
+
+  }
+
+  else {
+
+    console.error(
+      "Authorization Code alınamadı:",
+      response
+    );
+
+
+    document.getElementById("status").innerHTML =
+
+      '<span class="error">' +
+
+      "Meta yetkilendirmesi tamamlanamadı." +
+
+      "</span>";
+
+  }
+
+}
+
+
+/* =====================================================
+   TÜM BİLGİLER GELDİ Mİ?
+===================================================== */
+
+function checkIntegrationData() {
+
+  console.log("----- INTEGRATION DURUMU -----");
+
+  console.log(
+    "Authorization Code:",
+    authorizationCode ? "ALINDI" : "BEKLENİYOR"
+  );
+
+  console.log(
+    "WABA ID:",
+    wabaId || "BEKLENİYOR"
+  );
+
+  console.log(
+    "Phone Number ID:",
+    phoneNumberId || "BEKLENİYOR"
+  );
+
+
+  if (
+    authorizationCode &&
+    wabaId &&
+    phoneNumberId
+  ) {
+
+    console.log(
+      "================================="
+    );
+
+    console.log(
+      "TÜM WHATSAPP BİLGİLERİ ALINDI"
+    );
+
+    console.log(
+      "================================="
+    );
+
+
+    document.getElementById("status").innerHTML =
+
+      '<span class="success">' +
+
+      "✓ WhatsApp hesabı başarıyla bağlandı." +
+
+      "<br><br>" +
+
+      "WABA ID: " +
+      wabaId +
+
+      "<br>" +
+
+      "Phone Number ID: " +
+      phoneNumberId +
+
+      "<br><br>" +
+
+      "Backend bağlantısına hazır." +
+
+      "</span>";
+
+  }
+
+}
+
+
+/* =====================================================
+   EMBEDDED SIGNUP BAŞLAT
+===================================================== */
+
+function launchWhatsAppSignup() {
+
+  console.log(
+    "Embedded Signup v4 başlatılıyor..."
+  );
+
+
+  document.getElementById("status").innerText =
+    "Meta açılıyor...";
+
+
+  if (typeof FB === "undefined") {
+
+    console.error(
+      "Facebook SDK henüz yüklenmedi."
+    );
+
+
+    document.getElementById("status").innerHTML =
+
+      '<span class="error">' +
+
+      "Facebook SDK henüz hazır değil. " +
+      "Sayfayı yenileyip tekrar deneyin." +
+
+      "</span>";
+
+
+    return;
+
+  }
+
+
+  FB.login(
+
+    fbLoginCallback,
+
+    {
+
+      config_id: CONFIG_ID,
+
+      response_type: "code",
+
+      override_default_response_type: true,
+
+      extras: {
+        version: "v4"
+      }
+
+    }
+
+  );
+
+}
+
+</script>
+
+
+<!-- FACEBOOK JAVASCRIPT SDK -->
+
+<script
+  async
+  defer
+  crossorigin="anonymous"
+  src="https://connect.facebook.net/en_US/sdk.js">
+</script>
+
 
 </body>
 </html>
