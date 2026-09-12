@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NOKTA WhatsApp Bağlantısı</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: #090909;
+      color: #f4f4f4;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      width: 420px;
+      padding: 40px;
+      border: 1px solid #b88a32;
+      border-radius: 18px;
+      background: #111;
+      text-align: center;
+    }
+
+    h1 {
+      color: #d4af55;
+      letter-spacing: 4px;
+    }
+
+    p {
+      color: #aaa;
+      line-height: 1.5;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 20px;
+      border: 0;
+      border-radius: 10px;
+      background: #d4af55;
+      color: #080808;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #status {
+      margin-top: 22px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>NOKTA</h1>
+
+  <h2>WhatsApp Business</h2>
+
+  <p>
+    Nokta WhatsApp Business hesabını
+    Nokta Cari sistemine bağla.
+  </p>
+
+  <button onclick="launchWhatsAppSignup()">
+    WhatsApp Business'ı Bağla
+  </button>
+
+  <div id="status">Bağlantı bekleniyor.</div>
+</div>
+
+
+<script>
+  const APP_ID = "1406505614384928";
+  const CONFIG_ID = "1388583019481771";
+
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId: APP_ID,
+      cookie: true,
+      xfbml: true,
+      version: "v25.0"
+    });
+
+    document.getElementById("status").innerText =
+      "Meta bağlantısı hazır.";
+  };
+
+
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+
+    if (d.getElementById(id)) return;
+
+    js = d.createElement(s);
+    js.id = id;
+    js.src = "https://connect.facebook.net/en_US/sdk.js";
+
+    fjs.parentNode.insertBefore(js, fjs);
+
+  }(document, "script", "facebook-jssdk"));
+
+
+  window.addEventListener("message", function(event) {
+
+    if (
+      event.origin !== "https://www.facebook.com" &&
+      event.origin !== "https://web.facebook.com"
+    ) {
+      return;
+    }
+
+    try {
+
+      const data =
+        typeof event.data === "string"
+          ? JSON.parse(event.data)
+          : event.data;
+
+      if (data && data.type === "WA_EMBEDDED_SIGNUP") {
+
+        console.log("WhatsApp Embedded Signup:", data);
+
+        if (data.event === "FINISH") {
+
+          const phoneNumberId =
+            data.data && data.data.phone_number_id;
+
+          const wabaId =
+            data.data && data.data.waba_id;
+
+          document.getElementById("status").innerText =
+            "Bağlantı tamamlandı. Phone Number ID: " +
+            (phoneNumberId || "-") +
+            " | WABA ID: " +
+            (wabaId || "-");
+
+        }
+
+        else if (data.event === "CANCEL") {
+
+          document.getElementById("status").innerText =
+            "İşlem iptal edildi.";
+
+        }
+
+        else if (data.event === "ERROR") {
+
+          document.getElementById("status").innerText =
+            "Meta bağlantı hatası oluştu.";
+
+        }
+
+      }
+
+    } catch (e) {
+      console.log("Message:", event.data);
+    }
+
+  });
+
+
+  function launchWhatsAppSignup() {
+
+    document.getElementById("status").innerText =
+      "Meta açılıyor...";
+
+    FB.login(function(response) {
+
+      console.log("Login response:", response);
+
+      if (response.authResponse) {
+
+        document.getElementById("status").innerText =
+          "Meta yetkilendirmesi alındı.";
+
+        /*
+          DİKKAT:
+          response.authResponse.code ileride sunucu tarafında
+          Access Token'a çevrilecek.
+
+          App Secret bu HTML dosyasına KONULMAYACAK.
+        */
+
+      } else {
+
+        document.getElementById("status").innerText =
+          "Yetkilendirme tamamlanmadı.";
+
+      }
+
+    }, {
+
+      config_id: CONFIG_ID,
+      response_type: "code",
+      override_default_response_type: true,
+
+      extras: {
+        setup: {},
+        featureType: "whatsapp_business_app_onboarding",
+        sessionInfoVersion: "3"
+      }
+
+    });
+
+  }
+</script>
+
+</body>
+</html>
