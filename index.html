@@ -81,12 +81,13 @@
   const CONFIG_ID = "1388583019481771";
 
   window.fbAsyncInit = function() {
-    FB.init({
-      appId: APP_ID,
-      cookie: true,
-      xfbml: true,
-      version: "v25.0"
-    });
+  FB.init({
+  appId: APP_ID,
+  cookie: true,
+  xfbml: true,
+  version: "v25.0",
+  status: false
+});
 
     document.getElementById("status").innerText =
       "Meta bağlantısı hazır.";
